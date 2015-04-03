@@ -2,12 +2,12 @@
 package pop3
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
 	"strconv"
 	"strings"
-	"crypto/tls"
 )
 
 var (
@@ -218,10 +218,29 @@ func (c *Client) Quit() error {
 // and calling receiveFn for each mail.
 func ReceiveMail(addr, user, pass string, receiveFn ReceiveMailFunc) error {
 	c, err := Dial(addr)
-
 	if err != nil {
 		return err
 	}
+	return receiveMailFrom(c, user, pass, receiveFn)
+}
+
+// ReceiveMail connects to the server at addr,
+// and authenticates with user and pass,
+// and calling receiveFn for each mail.
+func ReceiveMailTLS(addr, user, pass string, receiveFn ReceiveMailFunc) error {
+	c, err := DialTLS(addr)
+	if err != nil {
+		return err
+	}
+
+	return receiveMailFrom(c, user, pass, receiveFn)
+}
+
+// ReceiveMail connects to the server at addr,
+// and authenticates with user and pass,
+// and calling receiveFn for each mail.
+func receiveMailFrom(c *Client, user, pass string, receiveFn ReceiveMailFunc) error {
+	var err error
 
 	defer func() {
 		if err != nil && err != EOF {
@@ -232,7 +251,7 @@ func ReceiveMail(addr, user, pass string, receiveFn ReceiveMailFunc) error {
 		c.Close()
 	}()
 
-	if err = c.User(user); err != nil {
+	if err := c.User(user); err != nil {
 		return err
 	}
 
