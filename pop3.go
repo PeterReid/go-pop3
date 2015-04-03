@@ -7,6 +7,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"crypto/tls"
 )
 
 var (
@@ -38,6 +39,18 @@ type Client struct {
 // The addr must include a port number.
 func Dial(addr string) (*Client, error) {
 	conn, err := net.Dial("tcp", addr)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return NewClient(conn)
+}
+
+// Dial returns a new Client connected to an POP server at addr.
+// The addr must include a port number.
+func DialTLS(addr string) (*Client, error) {
+	conn, err := tls.Dial("tcp", addr, nil)
 
 	if err != nil {
 		return nil, err
